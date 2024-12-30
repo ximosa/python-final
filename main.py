@@ -24,7 +24,7 @@ os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "google_credentials.json"
 TEMP_DIR = "temp"
 FONT_PATH = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"  # Ajusta la ruta si es necesario
 DEFAULT_FONT_SIZE = 30
-LINE_HEIGHT = 40
+#LINE_HEIGHT = 40 # Eliminamos LINE_HEIGHT como variable global
 VIDEO_FPS = 24
 VIDEO_CODEC = 'libx264'
 AUDIO_CODEC = 'aac'
@@ -60,7 +60,7 @@ VOCES_DISPONIBLES = {
     'es-ES-Wavenet-F': texttospeech.SsmlVoiceGender.FEMALE,
 }
 
-def create_text_image(text, size=IMAGE_SIZE_TEXT, font_size=DEFAULT_FONT_SIZE, line_height=LINE_HEIGHT,
+def create_text_image(text, size=IMAGE_SIZE_TEXT, font_size=DEFAULT_FONT_SIZE,
                       bg_color="black", text_color="white", background_image=None,
                       stretch_background=False, full_size_background=False):
     """Creates a text image with the specified text and styles."""
@@ -89,6 +89,9 @@ def create_text_image(text, size=IMAGE_SIZE_TEXT, font_size=DEFAULT_FONT_SIZE, l
     except Exception as e:
         logging.error(f"Error al cargar la fuente, usando la fuente predeterminada: {str(e)}")
         font = ImageFont.load_default()
+    
+    # Calculamos la altura de línea en función del tamaño de la fuente.
+    line_height = font_size * 1.2 # Puedes ajustar este factor (1.2)
 
     words = text.split()
     lines = []
