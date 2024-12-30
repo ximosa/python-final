@@ -91,7 +91,7 @@ def create_text_image(text, size=IMAGE_SIZE_TEXT, font_size=DEFAULT_FONT_SIZE,
         font = ImageFont.load_default()
     
     # Calculamos la altura de línea en función del tamaño de la fuente.
-    line_height = font_size * 1.2 # Puedes ajustar este factor (1.2)
+    line_height = font_size * 1.5  # Aumentamos el factor a 1.5
 
     words = text.split()
     lines = []
