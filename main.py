@@ -12,7 +12,6 @@ import requests
 from io import BytesIO
 st.set_page_config(
     page_title="video-creator",
-    page_icon="📊",
     layout="wide"
 )
 
