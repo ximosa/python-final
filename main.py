@@ -10,7 +10,13 @@ import numpy as np
 import tempfile
 import requests
 from io import BytesIO
+st.set_page_config(
+    page_title="video-creator",
+    page_icon="📊",
+    layout="wide"
+)
 
+st.title("creador de video")
 logging.basicConfig(level=logging.INFO)
 
 # Cargar credenciales de GCP desde secrets
