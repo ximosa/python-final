@@ -14,8 +14,6 @@ st.set_page_config(
     page_title="video-creator",
     layout="wide"
 )
-
-st.title("creador de video")
 logging.basicConfig(level=logging.INFO)
 
 # Cargar credenciales de GCP desde secrets
