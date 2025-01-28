@@ -41,8 +41,8 @@ VIDEO_SIZE = (1280, 720)  # Tamaño estándar del video
 
 # Configuración de voces
 VOCES_DISPONIBLES = {
-    'es-ES-Standard-A': texttospeech.SsmlVoiceGender.FEMALE,
     'es-ES-Standard-B': texttospeech.SsmlVoiceGender.MALE,
+    'es-ES-Standard-A': texttospeech.SsmlVoiceGender.FEMALE,
     'es-ES-Standard-C': texttospeech.SsmlVoiceGender.FEMALE,
     'es-ES-Standard-D': texttospeech.SsmlVoiceGender.FEMALE,
     'es-ES-Standard-E': texttospeech.SsmlVoiceGender.FEMALE,
