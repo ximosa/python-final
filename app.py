@@ -4,7 +4,14 @@ import json
 import logging
 import time
 from google.cloud import texttospeech
-from moviepy.editor import AudioFileClip, ImageClip, concatenate_videoclips
+from moviepy.editor import (
+    AudioFileClip,
+    ImageClip,
+    concatenate_videoclips,
+    VideoFileClip,
+    CompositeVideoClip,
+    loop,
+)  # Importamos CompositeVideoClip y loop
 from PIL import Image, ImageDraw, ImageFont
 import numpy as np
 import tempfile
@@ -107,7 +114,7 @@ def create_subscription_image(logo_url,size=(1280, 720), font_size=60):
     return np.array(img)
 
 # Función de creación de video
-def create_simple_video(texto, nombre_salida, voz, logo_url):
+def create_simple_video(texto, nombre_salida, voz, logo_url, video_fondo):
     archivos_temp = []
     clips_audio = []
     clips_finales = []
@@ -196,9 +203,18 @@ def create_simple_video(texto, nombre_salida, voz, logo_url):
                         .set_position('center'))
 
         clips_finales.append(subscribe_clip)
+
+        # Cargar el video de fondo
+        video_fondo_clip = VideoFileClip(video_fondo)
+        video_duracion_total = tiempo_acumulado + duracion_subscribe  # Sumamos la duración del subscribe clip
+        video_fondo_clip = loop(video_fondo_clip, duration=video_duracion_total)
+
+        # Redimensionar el video de fondo al tamaño deseado (1280x720)
+        video_fondo_clip = video_fondo_clip.resize((1280, 720))
         
-        video_final = concatenate_videoclips(clips_finales, method="compose")
-        
+        # Crear el video final con el clip de fondo y los clips de texto superpuestos
+        video_final = CompositeVideoClip([video_fondo_clip] + clips_finales)
+
         video_final.write_videofile(
             nombre_salida,
             fps=24,
@@ -209,13 +225,15 @@ def create_simple_video(texto, nombre_salida, voz, logo_url):
         )
         
         video_final.close()
-        
+
         for clip in clips_audio:
             clip.close()
-        
+
         for clip in clips_finales:
             clip.close()
-            
+
+        video_fondo_clip.close()
+
         for temp_file in archivos_temp:
             try:
                 if os.path.exists(temp_file):
@@ -239,6 +257,11 @@ def create_simple_video(texto, nombre_salida, voz, logo_url):
                 clip.close()
             except:
                 pass
+
+        try:
+            video_fondo_clip.close()
+        except:
+            pass
                 
         for temp_file in archivos_temp:
             try:
@@ -257,15 +280,21 @@ def main():
     uploaded_file = st.file_uploader("Carga un archivo de texto", type="txt")
     voz_seleccionada = st.selectbox("Selecciona la voz", options=list(VOCES_DISPONIBLES.keys()))
     logo_url = "https://yt3.ggpht.com/pBI3iT87_fX91PGHS5gZtbQi53nuRBIvOsuc-Z-hXaE3GxyRQF8-vEIDYOzFz93dsKUEjoHEwQ=s176-c-k-c0x00ffffff-no-rj"
-    
-    if uploaded_file:
+    video_fondo = st.file_uploader("Carga un video de fondo (mp4)", type=["mp4"])
+
+    if uploaded_file and video_fondo:
+        # Guardar el video de fondo temporalmente
+        with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as temp_video:
+            temp_video.write(video_fondo.read())
+            temp_video_path = temp_video.name
+
         texto = uploaded_file.read().decode("utf-8")
         nombre_salida = st.text_input("Nombre del Video (sin extensión)", "video_generado")
         
         if st.button("Generar Video"):
             with st.spinner('Generando video...'):
                 nombre_salida_completo = f"{nombre_salida}.mp4"
-                success, message = create_simple_video(texto, nombre_salida_completo, voz_seleccionada, logo_url)
+                success, message = create_simple_video(texto, nombre_salida_completo, voz_seleccionada, logo_url, temp_video_path)
                 if success:
                   st.success(message)
                   st.video(nombre_salida_completo)
@@ -275,6 +304,9 @@ def main():
                   st.session_state.video_path = nombre_salida_completo
                 else:
                   st.error(f"Error al generar video: {message}")
+
+            # Eliminar el archivo temporal del video de fondo
+            os.unlink(temp_video_path)
 
         if st.session_state.get("video_path"):
             st.markdown(f'<a href="https://www.youtube.com/upload" target="_blank">Subir video a YouTube</a>', unsafe_allow_html=True)
