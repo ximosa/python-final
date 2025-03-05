@@ -11,7 +11,7 @@ from moviepy.editor import (
     VideoFileClip,
     CompositeVideoClip,
 )  # Eliminamos loop
-from PIL import Image, ImageDraw, ImageFont  # Importamos Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont
 import numpy as np
 import tempfile
 import requests
@@ -91,7 +91,16 @@ def create_subscription_image(logo_url,size=(1280, 720), font_size=60):
         response = requests.get(logo_url)
         response.raise_for_status()
         logo_img = Image.open(BytesIO(response.content)).convert("RGBA")
-        logo_img = logo_img.resize((100,100), resample=Image.Resampling.LANCZOS) # Modificado
+
+        # Adaptar el filtro de resampling según la versión de Pillow
+        if Image.__version__ >= "10.0.0":
+            resample_filter = Image.Resampling.LANCZOS
+        elif Image.__version__ >= "9.0.0":
+            resample_filter = Image.LANCZOS
+        else:
+            resample_filter = Image.ANTIALIAS  # Para versiones antiguas (si es necesario)
+
+        logo_img = logo_img.resize((100,100), resample=resample_filter)
         logo_position = (20,20)
         img.paste(logo_img,logo_position,logo_img)
     except Exception as e:
