@@ -16,10 +16,10 @@ logging.basicConfig(level=logging.INFO)
 # Cargar credenciales de GCP desde secrets
 # Asegúrate de tener el archivo google_credentials.json correctamente configurado.
 # Opcionalmente, puedes usar variables de entorno.
-credentials = dict(st.secrets.gcp_service_account)
-with open("google_credentials.json", "w") as f:
-    json.dump(credentials, f)
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "google_credentials.json"
+#credentials = dict(st.secrets.gcp_service_account)
+#with open("google_credentials.json", "w") as f:
+#    json.dump(credentials, f)
+#os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "google_credentials.json"
 
 # Configuración de voces
 VOCES_DISPONIBLES = {
@@ -46,16 +46,16 @@ VOCES_DISPONIBLES = {
 }
 
 # Constantes
-VIDEO_WIDTH = 1620
+VIDEO_WIDTH = 1920
 VIDEO_HEIGHT = 200 # Ajustamos la altura del video
 FONT_SIZE = 40 # Ajustamos el tamaño de la fuente para que se vea bien en la altura reducida
 FONT_COLOR = "white"
-TRANSPARENT_BLACK = (0, 0, 0, 128)  # Negro transparente (RGBA, el último valor es la transparencia)
+TRANSPARENT_BLACK = (0, 0, 0, 0)  # Negro totalmente transparente (RGBA)
 FONT_PATH = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
 
 # Función de creación de texto (MODIFICADA)
 def create_text_image(text, size=(VIDEO_WIDTH, VIDEO_HEIGHT), font_size=FONT_SIZE, font_color=FONT_COLOR, transparent_background=TRANSPARENT_BLACK):
-    """Crea una imagen con texto sobre un fondo negro transparente."""
+    """Crea una imagen con texto sobre un fondo totalmente transparente."""
     img = Image.new('RGBA', size, transparent_background)  # Fondo negro transparente
     draw = ImageDraw.Draw(img)
     try:
@@ -200,7 +200,7 @@ def create_simple_video(texto, nombre_salida, voz, logo_url):
             txt_clip = (ImageClip(text_img, transparent=True)  # Importante: transparent=True
                           .set_start(tiempo_acumulado)
                           .set_duration(duracion)
-                          .set_position('center'))  #La posicionamos en el centro
+                          .set_position('center'))  # La posicionamos en el centro
 
             video_segment = txt_clip.set_audio(audio_clip.set_start(tiempo_acumulado))
             clips_finales.append(video_segment)
@@ -230,7 +230,7 @@ def create_simple_video(texto, nombre_salida, voz, logo_url):
             preset='ultrafast',
             threads=4,
             # Puedes ajustar el bitrate si es necesario para mejorar la calidad
-            # bitrate="2000k" #Prueba este valor si es necesario.
+            # ,bitrate="2000k" #Prueba este valor si es necesario.
         )
 
         video_final.close()
