@@ -11,7 +11,7 @@ from moviepy.editor import (
     VideoFileClip,
     CompositeVideoClip,
 )  # Eliminamos loop
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, Image.Resampling  # Importamos Image.Resampling
 import numpy as np
 import tempfile
 import requests
@@ -91,7 +91,7 @@ def create_subscription_image(logo_url,size=(1280, 720), font_size=60):
         response = requests.get(logo_url)
         response.raise_for_status()
         logo_img = Image.open(BytesIO(response.content)).convert("RGBA")
-        logo_img = logo_img.resize((100,100))
+        logo_img = logo_img.resize((100,100), resample=Image.Resampling.LANCZOS) # Modificado
         logo_position = (20,20)
         img.paste(logo_img,logo_position,logo_img)
     except Exception as e:
