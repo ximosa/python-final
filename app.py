@@ -80,46 +80,6 @@ def create_text_image(text, size=(1280, 360), font_size=30, line_height=40):
 
     return np.array(img)
 
-# Nueva función para crear la imagen de suscripción
-def create_subscription_image(logo_url,size=(1280, 720), font_size=60):
-    img = Image.new('RGB', size, (255, 0, 0))  # Fondo rojo
-    draw = ImageDraw.Draw(img)
-    font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", font_size)
-
-    # Cargar logo del canal
-    try:
-        response = requests.get(logo_url)
-        response.raise_for_status()
-        logo_img = Image.open(BytesIO(response.content)).convert("RGBA")
-
-        # Tamaño fijo para el logo (sin redimensionar con Pillow)
-        logo_size = (100, 100)
-        # logo_img = logo_img.resize(logo_size, resample=Image.LANCZOS)  # Eliminamos el resize
-
-        # Crear una nueva imagen para el logo redimensionado
-        new_logo_img = Image.new("RGBA", logo_size, (0, 0, 0, 0)) # Fondo transparente
-        new_logo_img.paste(logo_img, (0, 0), logo_img)
-
-        logo_position = (20,20)
-        img.paste(new_logo_img,logo_position,new_logo_img)
-    except Exception as e:
-        logging.error(f"Error al cargar el logo: {str(e)}")
-        
-    text1 = "¡SUSCRÍBETE A LECTOR DE SOMBRAS!"
-    left1, top1, right1, bottom1 = draw.textbbox((0, 0), text1, font=font)
-    x1 = (size[0] - (right1 - left1)) // 2
-    y1 = (size[1] - (bottom1 - top1)) // 2 - (bottom1 - top1) // 2 - 20
-    draw.text((x1, y1), text1, font=font, fill="white")
-    
-    font2 = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", font_size//2)
-    text2 = "Dale like y activa la campana 🔔"
-    left2, top2, right2, bottom2 = draw.textbbox((0, 0), text2, font=font2)
-    x2 = (size[0] - (right2 - left2)) // 2
-    y2 = (size[1] - (bottom2 - top2)) // 2 + (bottom1 - top1) // 2 + 20
-    draw.text((x2,y2), text2, font=font2, fill="white")
-
-    return np.array(img)
-
 # Función para hacer loop del video
 def loop_video(clip, duration):
     """Loops a video clip to a specified duration."""
@@ -130,7 +90,7 @@ def loop_video(clip, duration):
 
 
 # Función de creación de video
-def create_simple_video(texto, nombre_salida, voz, logo_url, video_fondo):
+def create_simple_video(texto, nombre_salida, voz, video_fondo):
     archivos_temp = []
     clips_audio = []
     clips_finales = []
@@ -210,20 +170,9 @@ def create_simple_video(texto, nombre_salida, voz, logo_url, video_fondo):
             tiempo_acumulado += duracion
             time.sleep(0.2)
 
-        # Añadir clip de suscripción
-        subscribe_img = create_subscription_image(logo_url) # Usamos la función creada
-        duracion_subscribe = 5
-
-        subscribe_clip = (ImageClip(subscribe_img)
-                        .set_start(tiempo_acumulado)
-                        .set_duration(duracion_subscribe)
-                        .set_position('center'))
-
-        clips_finales.append(subscribe_clip)
-
         # Cargar el video de fondo
         video_fondo_clip = VideoFileClip(video_fondo)
-        video_duracion_total = tiempo_acumulado + duracion_subscribe  # Sumamos la duración del subscribe clip
+        video_duracion_total = tiempo_acumulado  # Duración total basada en el audio
         video_fondo_clip = loop_video(video_fondo_clip, video_duracion_total)
 
         # Redimensionar el video de fondo al tamaño deseado (1280x720)
@@ -298,7 +247,6 @@ def main():
     
     uploaded_file = st.file_uploader("Carga un archivo de texto", type="txt")
     voz_seleccionada = st.selectbox("Selecciona la voz", options=list(VOCES_DISPONIBLES.keys()))
-    logo_url = "https://yt3.ggpht.com/pBI3iT87_fX91PGHS5gZtbQi53nuRBIvOsuc-Z-hXaE3GxyRQF8-vEIDYOzFz93dsKUEjoHEwQ=s176-c-k-c0x00ffffff-no-rj"
     video_fondo = st.file_uploader("Carga un video de fondo (mp4)", type=["mp4"])
 
     if uploaded_file and video_fondo:
@@ -313,7 +261,7 @@ def main():
         if st.button("Generar Video"):
             with st.spinner('Generando video...'):
                 nombre_salida_completo = f"{nombre_salida}.mp4"
-                success, message = create_simple_video(texto, nombre_salida_completo, voz_seleccionada, logo_url, temp_video_path)
+                success, message = create_simple_video(texto, nombre_salida_completo, voz_seleccionada, temp_video_path)
                 if success:
                   st.success(message)
                   st.video(nombre_salida_completo)
@@ -326,9 +274,6 @@ def main():
 
             # Eliminar el archivo temporal del video de fondo
             os.unlink(temp_video_path)
-
-        if st.session_state.get("video_path"):
-            st.markdown(f'<a href="https://www.youtube.com/upload" target="_blank">Subir video a YouTube</a>', unsafe_allow_html=True)
 
 if __name__ == "__main__":
     # Inicializar session state
