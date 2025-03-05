@@ -10,8 +10,7 @@ from moviepy.editor import (
     concatenate_videoclips,
     VideoFileClip,
     CompositeVideoClip,
-    loop,
-)  # Importamos CompositeVideoClip y loop
+)  # Eliminamos loop
 from PIL import Image, ImageDraw, ImageFont
 import numpy as np
 import tempfile
@@ -113,12 +112,22 @@ def create_subscription_image(logo_url,size=(1280, 720), font_size=60):
 
     return np.array(img)
 
+# Función para hacer loop del video
+def loop_video(clip, duration):
+    """Loops a video clip to a specified duration."""
+    num_loops = int(duration / clip.duration) + 1  # Calculate how many times to loop
+    clips = [clip] * num_loops  # Create a list of the clip repeated
+    final_clip = concatenate_videoclips(clips, method="compose").subclip(0, duration)  # Concatenate and trim
+    return final_clip
+
+
 # Función de creación de video
 def create_simple_video(texto, nombre_salida, voz, logo_url, video_fondo):
     archivos_temp = []
     clips_audio = []
     clips_finales = []
-    
+    video_fondo_clip = None  # Inicializar fuera del try
+
     try:
         logging.info("Iniciando proceso de creación de video...")
         frases = [f.strip() + "." for f in texto.split('.') if f.strip()]
@@ -207,7 +216,7 @@ def create_simple_video(texto, nombre_salida, voz, logo_url, video_fondo):
         # Cargar el video de fondo
         video_fondo_clip = VideoFileClip(video_fondo)
         video_duracion_total = tiempo_acumulado + duracion_subscribe  # Sumamos la duración del subscribe clip
-        video_fondo_clip = loop(video_fondo_clip, duration=video_duracion_total)
+        video_fondo_clip = loop_video(video_fondo_clip, video_duracion_total)
 
         # Redimensionar el video de fondo al tamaño deseado (1280x720)
         video_fondo_clip = video_fondo_clip.resize((1280, 720))
@@ -232,7 +241,8 @@ def create_simple_video(texto, nombre_salida, voz, logo_url, video_fondo):
         for clip in clips_finales:
             clip.close()
 
-        video_fondo_clip.close()
+        if video_fondo_clip:
+            video_fondo_clip.close()
 
         for temp_file in archivos_temp:
             try:
@@ -258,10 +268,11 @@ def create_simple_video(texto, nombre_salida, voz, logo_url, video_fondo):
             except:
                 pass
 
-        try:
-            video_fondo_clip.close()
-        except:
-            pass
+        if video_fondo_clip:
+            try:
+                video_fondo_clip.close()
+            except:
+                pass
                 
         for temp_file in archivos_temp:
             try:
