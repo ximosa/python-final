@@ -14,17 +14,18 @@ from moviepy.editor import (
 from PIL import Image, ImageDraw, ImageFont
 import numpy as np
 import tempfile
-import requests  # Aunque no lo uses directamente, lo dejo por si acaso en el futuro
+import requests
 from io import BytesIO
 
 logging.basicConfig(level=logging.INFO)
 
 # Cargar credenciales de GCP desde secrets (si estás en Streamlit Cloud)
 # Si estás corriendo localmente, puedes comentar estas líneas y usar tu archivo JSON directamente
- credentials = dict(st.secrets.gcp_service_account)
- with open("google_credentials.json", "w") as f:
-     json.dump(credentials, f)
- os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "google_credentials.json"
+
+credentials = dict(st.secrets["gcp_service_account"])  # Corregido: Usar corchetes
+with open("google_credentials.json", "w") as f:
+    json.dump(credentials, f)
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "google_credentials.json"
 
 
 # Configuración de voces
