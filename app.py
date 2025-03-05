@@ -28,26 +28,8 @@ os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "google_credentials.json"
 
 # Configuración de voces
 VOCES_DISPONIBLES = {
-    'es-ES-Standard-A': texttospeech.SsmlVoiceGender.FEMALE,
     'es-ES-Standard-B': texttospeech.SsmlVoiceGender.MALE,
-    'es-ES-Standard-C': texttospeech.SsmlVoiceGender.FEMALE,
-    'es-ES-Standard-D': texttospeech.SsmlVoiceGender.FEMALE,
-    'es-ES-Standard-E': texttospeech.SsmlVoiceGender.FEMALE,
-    'es-ES-Standard-F': texttospeech.SsmlVoiceGender.MALE,
-    'es-ES-Neural2-A': texttospeech.SsmlVoiceGender.FEMALE,
-    'es-ES-Neural2-B': texttospeech.SsmlVoiceGender.MALE,
-    'es-ES-Neural2-C': texttospeech.SsmlVoiceGender.FEMALE,
-    'es-ES-Neural2-D': texttospeech.SsmlVoiceGender.FEMALE,
-    'es-ES-Neural2-E': texttospeech.SsmlVoiceGender.FEMALE,
-    'es-ES-Neural2-F': texttospeech.SsmlVoiceGender.MALE,
-    'es-ES-Polyglot-1': texttospeech.SsmlVoiceGender.MALE,
-    'es-ES-Studio-C': texttospeech.SsmlVoiceGender.FEMALE,
-    'es-ES-Studio-F': texttospeech.SsmlVoiceGender.MALE,
-    'es-ES-Wavenet-B': texttospeech.SsmlVoiceGender.MALE,
-    'es-ES-Wavenet-C': texttospeech.SsmlVoiceGender.FEMALE,
-    'es-ES-Wavenet-D': texttospeech.SsmlVoiceGender.FEMALE,
-    'es-ES-Wavenet-E': texttospeech.SsmlVoiceGender.MALE,
-    'es-ES-Wavenet-F': texttospeech.SsmlVoiceGender.FEMALE,
+    'es-ES-Standard-A': texttospeech.SsmlVoiceGender.FEMALE,   
 }
 # Función de creación de texto
 def create_text_image(text, size=(1280, 360), font_size=30, line_height=40):
