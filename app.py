@@ -143,9 +143,10 @@ def create_subscription_image(logo_url, size=(1280, 720), font_size=60):
 
 # Función de creación de video simplificada y MEJORADA
 def create_simple_video_with_one_background(texto, nombre_salida, voz, logo_url, video_fondo):
-    archivos_temp = []
-    clips_audio = []
-    clips_finales = []
+    archivos_temp = []  # Lista para guardar los nombres de los archivos temporales (audio)
+    clips_audio = []  # Lista para guardar los objetos AudioFileClip
+    clips_finales = []  # Lista para guardar los clips finales
+    temp_video_path = None  # Variable para guardar la ruta del video temporal de fondo
 
     try:
         logging.info("Iniciando proceso de creación de video...")
@@ -153,44 +154,51 @@ def create_simple_video_with_one_background(texto, nombre_salida, voz, logo_url,
         client = texttospeech.TextToSpeechClient()
 
         # 1. Cargar y preparar el video de fondo
-        if video_fondo is not None:
+        background_clip = None
+        if video_fondo:
             try:
+                # Crear un archivo temporal para el video de fondo
                 with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as tmp_file:
                     tmp_file.write(video_fondo.read())
                     temp_video_path = tmp_file.name
-                background_clip = VideoFileClip(temp_video_path).resize(height=720) # Cargar el video temporal
+                background_clip = VideoFileClip(temp_video_path, audio=False).resize(height=720) # Importante: audio=False
             except Exception as e:
                 logging.error(f"Error al cargar video de fondo: {str(e)}")
                 background_clip = None
-                temp_video_path = None  # Asegurarse de que temp_video_path esté definido
-        else:
-            background_clip = None
-            temp_video_path = None
 
-        # 2. Calcular la duración total del video basado en el texto
+        # 2. Calcular la duración total del video basada en el texto
         total_duration = 0
         for frase in frases:
-            synthesis_input = texttospeech.SynthesisInput(text=frase)
-            voice = texttospeech.VoiceSelectionParams(
-                language_code="es-ES",
-                name=voz,
-                ssml_gender=VOCES_DISPONIBLES[voz]
-            )
-            audio_config = texttospeech.AudioConfig(
-                audio_encoding=texttospeech.AudioEncoding.MP3
-            )
-            response = client.synthesize_speech(
-                input=synthesis_input,
-                voice=voice,
-                audio_config=audio_config
-            )
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as tmp_audio_file:
-                 tmp_audio_file.write(response.audio_content)
-                 temp_audio_path = tmp_audio_file.name
-            audio_clip = AudioFileClip(temp_audio_path)
-            total_duration += audio_clip.duration
-            audio_clip.close()  # Important: Close the audio_clip after use
-            os.remove(temp_audio_path)  # Delete the temp file
+            try:
+                synthesis_input = texttospeech.SynthesisInput(text=frase)
+                voice = texttospeech.VoiceSelectionParams(
+                    language_code="es-ES",
+                    name=voz,
+                    ssml_gender=VOCES_DISPONIBLES[voz]
+                )
+                audio_config = texttospeech.AudioConfig(
+                    audio_encoding=texttospeech.AudioEncoding.MP3
+                )
+                response = client.synthesize_speech(
+                    input=synthesis_input,
+                    voice=voice,
+                    audio_config=audio_config
+                )
+
+                # Crear un archivo temporal para el audio
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as tmp_audio_file:
+                    tmp_audio_file.write(response.audio_content)
+                    temp_audio_path = tmp_audio_file.name
+
+                audio_clip = AudioFileClip(temp_audio_path)
+                total_duration += audio_clip.duration
+                audio_clip.close()
+                os.remove(temp_audio_path)  # Eliminar el archivo temporal inmediatamente
+
+            except Exception as e:
+                logging.error(f"Error al procesar el audio de la frase: {str(e)}")
+                return False, f"Error al procesar el audio de la frase: {str(e)}"
+
         # 3. Si no hay video de fondo, crear un fondo básico que dure todo el video
         if background_clip is None:
             basic_bg_path = "basic_bg.mp4"  # Nombre simplificado
@@ -207,53 +215,62 @@ def create_simple_video_with_one_background(texto, nombre_salida, voz, logo_url,
         # 5. Iterar sobre las frases y crear los clips de texto y audio
         current_time = 0  # Para mantener la posición en el video de fondo
         for i, frase in enumerate(frases):
-            logging.info(f"Procesando frase {i+1} de {len(frases)}")
+            try:
+                logging.info(f"Procesando frase {i+1} de {len(frases)}")
 
-            # Generar audio con Google TTS
-            synthesis_input = texttospeech.SynthesisInput(text=frase)
-            voice = texttospeech.VoiceSelectionParams(
-                language_code="es-ES",
-                name=voz,
-                ssml_gender=VOCES_DISPONIBLES[voz]
-            )
-            audio_config = texttospeech.AudioConfig(
-                audio_encoding=texttospeech.AudioEncoding.MP3
-            )
+                # Generar audio con Google TTS
+                synthesis_input = texttospeech.SynthesisInput(text=frase)
+                voice = texttospeech.VoiceSelectionParams(
+                    language_code="es-ES",
+                    name=voz,
+                    ssml_gender=VOCES_DISPONIBLES[voz]
+                )
+                audio_config = texttospeech.AudioConfig(
+                    audio_encoding=texttospeech.AudioEncoding.MP3
+                )
 
-            response = client.synthesize_speech(
-                input=synthesis_input,
-                voice=voice,
-                audio_config=audio_config
-            )
+                response = client.synthesize_speech(
+                    input=synthesis_input,
+                    voice=voice,
+                    audio_config=audio_config
+                )
 
-            # Guardar el audio temporalmente
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as tmp_audio_file:
-                 tmp_audio_file.write(response.audio_content)
-                 temp_filename = tmp_audio_file.name #usar el nombre completo del temporal
-            #temp_filename = f"audio_{i}.mp3"  # Nombre simplificado
-            archivos_temp.append(temp_filename)
-            #with open(temp_filename, "wb") as out:
-            #    out.write(response.audio_content)
-            audio_clip = AudioFileClip(temp_filename)
-            clips_audio.append(audio_clip)
-            duracion = audio_clip.duration
+                # Guardar el audio temporalmente
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as tmp_audio_file:
+                    tmp_audio_file.write(response.audio_content)
+                    temp_filename = tmp_audio_file.name
 
-            # Crear capa de texto semi-transparente
-            text_img = create_text_image(frase)
-            txt_clip = (ImageClip(text_img)
-                      .set_duration(duracion)
-                      .set_position(('center', 'bottom'))
-                      .set_start(current_time))  # Establecer el tiempo de inicio
+                audio_clip = AudioFileClip(temp_filename)
+                clips_audio.append(audio_clip)
+                duracion = audio_clip.duration
 
-            # Combinar fondo y texto
-            video_segment = CompositeVideoClip([
-                background_clip.subclip(current_time, current_time + duracion),  # Recortar el video de fondo
-                txt_clip
-            ]).set_audio(audio_clip)
+                # Crear capa de texto semi-transparente
+                text_img = create_text_image(frase)
+                txt_clip = (ImageClip(text_img)
+                          .set_duration(duracion)
+                          .set_position(('center', 'bottom'))
+                          .set_start(current_time))  # Establecer el tiempo de inicio
 
-            clips_finales.append(video_segment)
-            current_time += duracion  # Avanzar el tiempo actual
-            time.sleep(0.2)
+                # Combinar fondo y texto
+                video_segment = CompositeVideoClip([
+                    background_clip.subclip(current_time, current_time + duracion),  # Recortar el video de fondo
+                    txt_clip
+                ]).set_audio(audio_clip)
+
+                clips_finales.append(video_segment)
+                current_time += duracion  # Avanzar el tiempo actual
+                time.sleep(0.2)  # Considera reducir o eliminar esto en producción
+
+            except Exception as e:
+                logging.error(f"Error al procesar el segmento {i+1}: {str(e)}")
+                return False, f"Error al procesar el segmento {i+1}: {str(e)}"
+            finally:
+                # Asegurarse de que el archivo de audio temporal se elimina
+                try:
+                    if os.path.exists(temp_filename):
+                        os.remove(temp_filename)
+                except Exception as e:
+                    logging.error(f"Error al eliminar archivo temporal {temp_filename}: {str(e)}")
 
         # 6. Añadir clip de suscripción (con fondo de video si es posible)
         subscribe_img = create_subscription_image(logo_url)
@@ -283,25 +300,25 @@ def create_simple_video_with_one_background(texto, nombre_salida, voz, logo_url,
         for clip in clips_finales:
             clip.close()
 
-        # Eliminar archivos temporales
-        for temp_file in archivos_temp:
-            try:
+    except Exception as e:
+        logging.error(f"Error general: {str(e)}")
+        return False, str(e)
+    finally:
+        # Asegurarse de que todos los archivos temporales se eliminan
+        try:
+            for temp_file in archivos_temp:
                 if os.path.exists(temp_file):
                     os.remove(temp_file)
-            except Exception as e:
-                logging.error(f"Error al eliminar archivo temporal {temp_file}: {str(e)}")
-        # Eliminar el video temporal de fondo si existe
-        if temp_video_path:
-            try:
+        except Exception as e:
+            logging.error(f"Error al eliminar archivos temporales de audio: {str(e)}")
+
+        try:
+            if temp_video_path and os.path.exists(temp_video_path):
                 os.remove(temp_video_path)
-            except Exception as e:
-                logging.error(f"Error al eliminar el video temporal de fondo: {str(e)}")
+        except Exception as e:
+            logging.error(f"Error al eliminar video temporal de fondo: {str(e)}")
 
-        return True, "Video generado exitosamente"
-
-    except Exception as e:
-        logging.error(f"Error: {str(e)}")
-        # Cerrar y limpiar recursos en caso de error
+        # Cerrar y liberar memoria de clips si no se cerraron correctamente
         for clip in clips_audio:
             try:
                 clip.close()
@@ -314,12 +331,7 @@ def create_simple_video_with_one_background(texto, nombre_salida, voz, logo_url,
             except:
                 pass
 
-        for temp_file in archivos_temp:
-            try:
-                if os.path.exists(temp_file):
-                    os.remove(temp_file)
-            except:
-                pass
+
         # Eliminar el video temporal de fondo si existe (en caso de error)
         if temp_video_path:
             try:
@@ -327,7 +339,7 @@ def create_simple_video_with_one_background(texto, nombre_salida, voz, logo_url,
             except Exception as e:
                 logging.error(f"Error al eliminar el video temporal de fondo: {str(e)}")
 
-        return False, str(e)
+        return True, "Video generado exitosamente"
 
 
 def main():
