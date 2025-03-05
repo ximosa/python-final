@@ -11,7 +11,7 @@ from moviepy.editor import (
     VideoFileClip,
     CompositeVideoClip,
 )  # Eliminamos loop
-from PIL import Image, ImageDraw, ImageFont, Image.Resampling  # Importamos Image.Resampling
+from PIL import Image, ImageDraw, ImageFont  # Importamos Image, ImageDraw, ImageFont
 import numpy as np
 import tempfile
 import requests
