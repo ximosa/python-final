@@ -46,7 +46,7 @@ VOCES_DISPONIBLES = {
 }
 
 # Constantes
-VIDEO_WIDTH = 1920
+VIDEO_WIDTH = 1620
 VIDEO_HEIGHT = 100 # Ajustamos la altura del video
 FONT_SIZE = 40 # Ajustamos el tamaño de la fuente para que se vea bien en la altura reducida
 FONT_COLOR = "white"
