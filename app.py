@@ -92,17 +92,16 @@ def create_subscription_image(logo_url,size=(1280, 720), font_size=60):
         response.raise_for_status()
         logo_img = Image.open(BytesIO(response.content)).convert("RGBA")
 
-        # Adaptar el filtro de resampling según la versión de Pillow
-        if Image.__version__ >= "10.0.0":
-            resample_filter = Image.Resampling.LANCZOS
-        elif Image.__version__ >= "9.0.0":
-            resample_filter = Image.LANCZOS
-        else:
-            resample_filter = Image.ANTIALIAS  # Para versiones antiguas (si es necesario)
+        # Tamaño fijo para el logo (sin redimensionar con Pillow)
+        logo_size = (100, 100)
+        # logo_img = logo_img.resize(logo_size, resample=Image.LANCZOS)  # Eliminamos el resize
 
-        logo_img = logo_img.resize((100,100), resample=resample_filter)
+        # Crear una nueva imagen para el logo redimensionado
+        new_logo_img = Image.new("RGBA", logo_size, (0, 0, 0, 0)) # Fondo transparente
+        new_logo_img.paste(logo_img, (0, 0), logo_img)
+
         logo_position = (20,20)
-        img.paste(logo_img,logo_position,logo_img)
+        img.paste(new_logo_img,logo_position,new_logo_img)
     except Exception as e:
         logging.error(f"Error al cargar el logo: {str(e)}")
         
